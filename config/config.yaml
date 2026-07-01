@@ -1,0 +1,93 @@
+# Configuração central do projeto. Única fonte de sementes e parâmetros,
+# para garantir a reprodutibilidade (Seção 4 da Entrega 3).
+
+semente: 42
+
+# ---------------------------------------------------------------------------
+# Geração da base sintética (valores ilustrativos, da ordem de grandeza típica do domínio).
+# ---------------------------------------------------------------------------
+sintetico:
+  n_profissionais: 12000       # captados (antes do funil de ativação)
+  taxa_ativacao: 0.18          # ~18% se ativam (mapeamento técnico, Entrega 1)
+  # Processo latente de churn (em dias, a partir da ativação).
+  churn_escala_weibull: 120.0  # escala da Weibull do tempo até churn
+  churn_forma_weibull: 1.3     # forma > 1: risco crescente
+  prob_incidente_por_diaria: 0.04
+  prob_inativacao_involuntaria: 0.005  # ~0,5% dos inativados (justa causa)
+  prob_suspensao: 0.12              # ~12% das profissionais ativas passam por suspensão temporária
+  data_inicio: "2024-01-01"    # início da janela de observação
+  data_corte: "2026-01-01"     # corte de observação (24 meses de histórico)
+
+# ---------------------------------------------------------------------------
+# Construção da cohort e definição do alvo (Seção 1 da Entrega 3).
+# ---------------------------------------------------------------------------
+cohort:
+  landmark_dias: 30            # marco de observação após a ativação
+  janela_inatividade_dias: 60  # W: inatividade que caracteriza churn
+  janela_expurgo_dias: 60      # remove última atividade próxima ao corte
+  cidade: "sao paulo"
+  estado: "SP"
+  data_corte: "2026-01-01"
+
+# ---------------------------------------------------------------------------
+# Protocolo experimental (Seção 4 da Entrega 3).
+# ---------------------------------------------------------------------------
+protocolo:
+  n_folds: 10                  # k-fold estratificado pelo evento
+  n_iter_busca: 25             # iterações da busca aleatória de hiperparâmetros
+  tempos_avaliacao_quantis: [0.25, 0.5, 0.75]  # quantis de T p/ AUC(t) e Brier(t)
+
+# ---------------------------------------------------------------------------
+# Paralelismo (ajuste ao hardware). A busca de hiperparâmetros paraleliza no
+# nível dos CANDIDATOS; cada worker roda single-thread em BLAS/OpenMP (as threads
+# são capadas no preâmbulo dos experimentos) para evitar oversubscription.
+#   n_jobs: "auto" -> (núcleos_totais - nucleos_livres); inteiro fixo; ou -1 (todos)
+# Em uma máquina de 10 núcleos, "auto" com nucleos_livres=4 usa 6 e mantém o SO
+# responsivo. Aumente n_jobs (ou reduza nucleos_livres) para rodar mais rápido.
+# ---------------------------------------------------------------------------
+paralelismo:
+  n_jobs: "auto"
+  nucleos_livres: 4
+
+# ---------------------------------------------------------------------------
+# Espaços de busca de hiperparâmetros (Tabela 1 da Entrega 3).
+# ---------------------------------------------------------------------------
+modelos:
+  cox:
+    l1_ratio: [0.1, 0.5, 0.9]
+    alpha_min_ratio: 0.01
+  rsf:
+    n_estimators: [200, 500, 1000]
+    min_samples_leaf: [5, 15, 30, 50]
+    max_features: ["sqrt", "log2", 0.5]
+    max_depth: [null, 5, 10, 20]
+  gbm:
+    n_estimators: [100, 300, 500, 1000]
+    learning_rate: [0.01, 0.05, 0.1, 0.3]
+    max_depth: [2, 3, 4, 6]
+    subsample: [0.6, 0.8, 1.0]
+
+# ---------------------------------------------------------------------------
+# Análises de sensibilidade (Seção 4 da Entrega 3).
+# ---------------------------------------------------------------------------
+sensibilidade:
+  janela_inatividade_dias: [30, 60, 90]
+  landmark_dias: [14, 30, 45]
+
+# ---------------------------------------------------------------------------
+# Interpretabilidade (Seção 4 da Entrega 3).
+# Além das 3 covariáveis mais importantes (selecionadas automaticamente), o
+# experimento 05 gera PDP para estas features do cluster de reputação, de modo
+# que os PDPs que sustentam a discussão da hipótese de desintermediação sejam
+# reprodutíveis pelo pipeline (e não recalculados à parte).
+# ---------------------------------------------------------------------------
+interpretabilidade:
+  pdp_features: [taxa_preferencial, nota_max_servico, pontualidade, taxa_retencao]
+
+caminhos:
+  dados_bruto: "dados/bruto"
+  dados_sintetico: "dados/sintetico"
+  dados_processado: "dados/processado"
+  resultados_tabelas: "resultados/tabelas"
+  resultados_figuras: "resultados/figuras"
+  resultados_execucoes: "resultados/execucoes"

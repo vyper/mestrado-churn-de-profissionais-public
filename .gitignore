@@ -1,0 +1,36 @@
+# Credenciais (NUNCA versionar — chaves de service account, mesmo read-only).
+chave-readonly.json
+*-readonly.json
+*.credentials.json
+
+# Dados (proprietários) e artefatos pesados não versionados.
+dados/bruto/
+dados/amostra/
+dados/processado/
+# A base sintética de exemplo é versionada para reprodutibilidade pública:
+!dados/sintetico/
+dados/sintetico/*.parquet
+
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.ipynb_checkpoints/
+*.egg-info/
+
+# Resultados gerados (regeráveis a partir do código)
+resultados/tabelas/*.tex
+resultados/tabelas/*.csv
+resultados/figuras/*.pdf
+resultados/figuras/*.png
+resultados/execucoes/
+resultados/modelos/
+resultados/*.log
+
+.DS_Store
+
+# Mantém a estrutura de pastas de dados/resultados no repositório (conteúdo ignorado).
+!dados/bruto/.gitkeep
+!dados/processado/.gitkeep
+!resultados/.gitkeep
